@@ -1,6 +1,7 @@
 coverage
+flask
+marrow.mailer
 mock
 nose
 pea
 sphinx
--e git://github.com/lacostej/nosyd.git#egg=nosyd
