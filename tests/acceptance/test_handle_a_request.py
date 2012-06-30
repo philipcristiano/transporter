@@ -1,28 +1,12 @@
 from Queue import Empty
 from multiprocessing import Process, Queue
 from smtpd import SMTPServer
-import asyncore
 
 from pea import *
 import unittest2
 
 from transporter.api import app
-
-
-
-class FakeSMTPServer(SMTPServer):
-    def __init__(self, emails, *args, **kwargs):
-        self.emails = emails
-        SMTPServer.__init__(self, *args, **kwargs)
-
-    def process_message(self, peer, mailfrom, rcpttos, data):
-        self.emails.put((mailfrom, rcpttos, data))
-
-    def asyncore_start(self):
-        try:
-            asyncore.loop()
-        finally:
-            print 'Stopping asyncore'
+from tests.helpers.smtp_server import FakeSMTPServer
 
 
 def get_mail_from_world(world):
