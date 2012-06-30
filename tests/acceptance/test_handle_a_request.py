@@ -26,7 +26,8 @@ def I_have_a_transporter_running():
 def I_have_a_smtp_server_running():
     world.emails = Queue()
 
-    world.smtp_server = FakeSMTPServer(world.emails, ('localhost', world.port), None)
+    world.smtp_server = FakeSMTPServer(('localhost', world.port), None)
+    world.smtp_server.add_callback(world.emails.put)
     world.smtp_server_process = Process(target=world.smtp_server.asyncore_start)
     world.smtp_server_process.start()
 
