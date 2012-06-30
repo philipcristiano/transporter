@@ -1,9 +1,10 @@
+from Queue import Empty
 from multiprocessing import Process, Queue
 from smtpd import SMTPServer
 import asyncore
-from Queue import Empty
 
 from pea import *
+import unittest2
 
 from transporter.api import app
 
@@ -62,28 +63,28 @@ def I_send_an_http_email_expecting_an_error(errno):
         'body': 'I was expecting a {0}'.format(errno),
     }
     resp = world.transporter.post('/', data=data)
-    assert resp.status_code == errno
+    world.test.assertEqual(resp.status_code, errno)
 
 @step
 def I_receive_an_email_sent_to(to_address):
     email = get_mail_from_world(world)
-    assert email[1][0] == to_address
+    world.test.assertEqual(email[1][0], to_address)
 
 @step
 def I_receive_no_emails():
-    try:
-        mail = get_mail_from_world(world)
-    except Empty:
-        return
-    assert False, 'Expected no emails available, got {0}'.format(mail)
-
+    world.test.assertRaises(Empty, get_mail_from_world, world)
 
 @step
 def I_stop_the_smtp_server():
     world.smtp_server_process.terminate()
 
 
-class TestHandleASingleRequest(TestCase):
+class _BaseTestCase(TestCase, unittest2.TestCase):
+    def setUp(self):
+        super(_BaseTestCase, self).setUp()
+        world.test = self
+
+class TestHandleASingleRequest(_BaseTestCase):
     def test_running_a_single_process(self):
         Given.I_set_the_smtp_port_to(7999)
         And.I_have_a_transporter_running()
@@ -96,7 +97,7 @@ class TestHandleASingleRequest(TestCase):
         Then.I_stop_the_smtp_server()
 
 
-class TestHandleASingleRequestWithNoSMTPServer(TestCase):
+class TestHandleASingleRequestWithNoSMTPServer(_BaseTestCase):
     def test_running_a_single_process(self):
         Given.I_set_the_smtp_port_to(7998)
         And.I_have_a_transporter_running()
