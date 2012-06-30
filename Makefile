@@ -32,7 +32,7 @@ tdd:
 
 .PHONY: docs
 docs:
-	bin/sphinx-build -b html -d docs/build/doctrees docs/source docs/html
+	$(VIRTUALENV_BIN)/sphinx-build -b html -d docs/build/doctrees docs/source docs/html
 
 .PHONY: foreman
 foreman:
