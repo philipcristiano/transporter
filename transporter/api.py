@@ -1,13 +1,18 @@
-from flask import Flask, request
-app = Flask(__name__)
+import errno
+import socket
+
+from flask import abort, Flask, request
 from marrow.mailer import Mailer, Message
+
+
+app = Flask(__name__)
 
 def send_mail(to_address, from_address, body):
     mailer = Mailer(dict(
             manager = 'immediate',
             transport = dict(
                     use = 'smtp',
-                    port = 7999,
+                    port = app.config['SMTP_PORT'],
                     host = 'localhost')))
     mailer.start()
 
@@ -21,8 +26,13 @@ def send_mail(to_address, from_address, body):
 @app.route('/', methods=['POST'])
 def handle_mail():
     f = request.form
-    send_mail(f['to_address'], f['from_address'], f['body'])
 
+    try:
+        send_mail(f['to_address'], f['from_address'], f['body'])
+    except socket.error, v:
+        errorcode=v[0]
+        if errorcode==errno.ECONNREFUSED:
+            abort(503)
     return 'Yay!'
 
 
