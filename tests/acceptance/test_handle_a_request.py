@@ -1,6 +1,7 @@
 from multiprocessing import Process, Queue
 from smtpd import SMTPServer
 import asyncore
+from Queue import Empty
 
 from pea import *
 
@@ -27,6 +28,11 @@ def get_mail_from_world(world):
     return world.emails.get_nowait()
 
 @step
+def I_set_the_smtp_port_to(port_number):
+    world.port = port_number
+    app.config['SMTP_PORT'] = port_number
+
+@step
 def I_have_a_transporter_running():
     app.config['TESTING'] = True
     world.transporter = app.test_client()
@@ -35,7 +41,7 @@ def I_have_a_transporter_running():
 def I_have_a_smtp_server_running():
     world.emails = Queue()
 
-    world.smtp_server = FakeSMTPServer(world.emails, ('localhost', 7999), None)
+    world.smtp_server = FakeSMTPServer(world.emails, ('localhost', world.port), None)
     world.smtp_server_process = Process(target=world.smtp_server.asyncore_start)
     world.smtp_server_process.start()
 
@@ -49,9 +55,28 @@ def I_send_an_http_email(to_address, from_address, body):
     world.transporter.post('/', data=data)
 
 @step
+def I_send_an_http_email_expecting_an_error(errno):
+    data = {
+        'to_address': 'to__expecting_an_error@example.com',
+        'from_address': 'from__expecting_an_error@example.com',
+        'body': 'I was expecting a {0}'.format(errno),
+    }
+    resp = world.transporter.post('/', data=data)
+    assert resp.status_code == errno
+
+@step
 def I_receive_an_email_sent_to(to_address):
     email = get_mail_from_world(world)
     assert email[1][0] == to_address
+
+@step
+def I_receive_no_emails():
+    try:
+        mail = get_mail_from_world(world)
+    except Empty:
+        return
+    assert False, 'Expected no emails available, got {0}'.format(mail)
+
 
 @step
 def I_stop_the_smtp_server():
@@ -60,10 +85,20 @@ def I_stop_the_smtp_server():
 
 class TestHandleASingleRequest(TestCase):
     def test_running_a_single_process(self):
-        Given.I_have_a_transporter_running()
+        Given.I_set_the_smtp_port_to(7999)
+        And.I_have_a_transporter_running()
         And.I_have_a_smtp_server_running()
         When.I_send_an_http_email('to@example.com', 'from@example.com', 'Body')
         Then.I_receive_an_email_sent_to('to@example.com')
 
     def tearDown(self):
+        super(TestHandleASingleRequest, self).tearDown()
         Then.I_stop_the_smtp_server()
+
+
+class TestHandleASingleRequestWithNoSMTPServer(TestCase):
+    def test_running_a_single_process(self):
+        Given.I_set_the_smtp_port_to(7998)
+        And.I_have_a_transporter_running()
+        When.I_send_an_http_email_expecting_an_error(503)
+        Then.I_receive_no_emails()
