@@ -7,11 +7,11 @@ class MailingAdapter(object):
     def __init__(self, host, port):
 
         self.mailer = Mailer(dict(
-                manager = 'immediate',
-                transport = dict(
-                        use = 'smtp',
-                        port = port,
-                        host = 'localhost')))
+            manager = 'immediate',
+            transport = dict(
+                use = 'smtp',
+                port = port,
+                host = 'localhost')))
         self.mailer.start()
 
     def send_mail(self, to_address, from_address, body):
