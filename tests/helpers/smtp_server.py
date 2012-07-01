@@ -10,6 +10,10 @@ class FakeSMTPServer(SMTPServer):
         SMTPServer.__init__(self, *args, **kwargs)
         self.callbacks = []
 
+    def add_callback(self, callback):
+        "Callback that will receive the parsed message"
+        self.callbacks.append(callback)
+
     def process_message(self, peer, mailfrom, rcpttos, data):
         message = self._parse_message(data)
         for callback in self.callbacks:
@@ -26,6 +30,3 @@ class FakeSMTPServer(SMTPServer):
         finally:
             print 'Stopping asyncore'
 
-    def add_callback(self, callback):
-        "Callback that will receive the email tuple"
-        self.callbacks.append(callback)
