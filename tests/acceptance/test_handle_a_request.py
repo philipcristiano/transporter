@@ -34,18 +34,18 @@ def I_have_a_smtp_server_running():
 @step
 def I_send_an_http_email(to_address, from_address, body):
     data = {
-        'to_address': to_address,
-        'from_address': from_address,
-        'body': body,
+        'to': to_address,
+        'from': from_address,
+        'text': body,
     }
     world.transporter.post('/', data=data)
 
 @step
 def I_send_an_http_email_expecting_an_error(errno):
     data = {
-        'to_address': 'to__expecting_an_error@example.com',
-        'from_address': 'from__expecting_an_error@example.com',
-        'body': 'I was expecting a {0}'.format(errno),
+        'to': 'to__expecting_an_error@example.com',
+        'from': 'from__expecting_an_error@example.com',
+        'text': 'I was expecting a {0}'.format(errno),
     }
     resp = world.transporter.post('/', data=data)
     world.test.assertEqual(resp.status_code, errno)

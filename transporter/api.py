@@ -28,7 +28,7 @@ def handle_mail():
     f = request.form
 
     try:
-        send_mail(f['to_address'], f['from_address'], f['body'])
+        send_mail(f['to'], f['from'], f['text'])
     except socket.error, v:
         errorcode=v[0]
         if errorcode==errno.ECONNREFUSED:
