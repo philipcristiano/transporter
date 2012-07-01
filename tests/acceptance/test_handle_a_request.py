@@ -53,7 +53,7 @@ def I_send_an_http_email_expecting_an_error(errno):
 @step
 def I_receive_an_email_sent_to(to_address):
     email = get_mail_from_world(world)
-    world.test.assertEqual(email[1][0], to_address)
+    world.test.assertEqual(email.get('to'), to_address)
 
 @step
 def I_receive_no_emails():
