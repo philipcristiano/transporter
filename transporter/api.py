@@ -2,33 +2,19 @@ import errno
 import socket
 
 from flask import abort, Flask, request
-from marrow.mailer import Mailer, Message
 
+from transporter.mailing_adapter import MailingAdapter
 
 app = Flask(__name__)
 
-def send_mail(to_address, from_address, body):
-    mailer = Mailer(dict(
-            manager = 'immediate',
-            transport = dict(
-                    use = 'smtp',
-                    port = app.config['SMTP_PORT'],
-                    host = 'localhost')))
-    mailer.start()
-
-    message = Message(author=from_address, to=to_address)
-    message.subject = "Testing Marrow Mailer"
-    message.plain = body
-    mailer.send(message)
-
-    mailer.stop()
 
 @app.route('/', methods=['POST'])
 def handle_mail():
     f = request.form
+    mailing_adapter = MailingAdapter('localhost', app.config['SMTP_PORT'])
 
     try:
-        send_mail(f['to_address'], f['from_address'], f['body'])
+        mailing_adapter.send_mail(f['to'], f['from'], f['text'])
     except socket.error, v:
         errorcode=v[0]
         if errorcode==errno.ECONNREFUSED:

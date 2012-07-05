@@ -1,28 +1,12 @@
 from Queue import Empty
 from multiprocessing import Process, Queue
 from smtpd import SMTPServer
-import asyncore
 
 from pea import *
 import unittest2
 
 from transporter.api import app
-
-
-
-class FakeSMTPServer(SMTPServer):
-    def __init__(self, emails, *args, **kwargs):
-        self.emails = emails
-        SMTPServer.__init__(self, *args, **kwargs)
-
-    def process_message(self, peer, mailfrom, rcpttos, data):
-        self.emails.put((mailfrom, rcpttos, data))
-
-    def asyncore_start(self):
-        try:
-            asyncore.loop()
-        finally:
-            print 'Stopping asyncore'
+from tests.helpers.smtp_server import FakeSMTPServer
 
 
 def get_mail_from_world(world):
@@ -42,25 +26,26 @@ def I_have_a_transporter_running():
 def I_have_a_smtp_server_running():
     world.emails = Queue()
 
-    world.smtp_server = FakeSMTPServer(world.emails, ('localhost', world.port), None)
+    world.smtp_server = FakeSMTPServer(('localhost', world.port), None)
+    world.smtp_server.add_callback(world.emails.put)
     world.smtp_server_process = Process(target=world.smtp_server.asyncore_start)
     world.smtp_server_process.start()
 
 @step
 def I_send_an_http_email(to_address, from_address, body):
     data = {
-        'to_address': to_address,
-        'from_address': from_address,
-        'body': body,
+        'to': to_address,
+        'from': from_address,
+        'text': body,
     }
     world.transporter.post('/', data=data)
 
 @step
 def I_send_an_http_email_expecting_an_error(errno):
     data = {
-        'to_address': 'to__expecting_an_error@example.com',
-        'from_address': 'from__expecting_an_error@example.com',
-        'body': 'I was expecting a {0}'.format(errno),
+        'to': 'to__expecting_an_error@example.com',
+        'from': 'from__expecting_an_error@example.com',
+        'text': 'I was expecting a {0}'.format(errno),
     }
     resp = world.transporter.post('/', data=data)
     world.test.assertEqual(resp.status_code, errno)
@@ -68,7 +53,7 @@ def I_send_an_http_email_expecting_an_error(errno):
 @step
 def I_receive_an_email_sent_to(to_address):
     email = get_mail_from_world(world)
-    world.test.assertEqual(email[1][0], to_address)
+    world.test.assertEqual(email.get('to'), to_address)
 
 @step
 def I_receive_no_emails():
