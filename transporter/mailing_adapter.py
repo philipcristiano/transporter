@@ -7,7 +7,8 @@ class MailingAdapter(object):
     def __init__(self, host, port):
 
         self.mailer = Mailer(dict(
-            manager = 'immediate',
+            manager = dict(
+                use = 'immediate'),
             transport = dict(
                 use = 'smtp',
                 port = port,
