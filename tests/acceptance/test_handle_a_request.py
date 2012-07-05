@@ -1,6 +1,5 @@
 from Queue import Empty
 from multiprocessing import Process, Queue
-from smtpd import SMTPServer
 
 from pea import *
 import unittest2
