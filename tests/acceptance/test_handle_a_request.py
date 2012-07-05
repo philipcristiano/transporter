@@ -1,6 +1,5 @@
 from Queue import Empty
 from multiprocessing import Process, Queue
-from smtpd import SMTPServer
 
 from pea import *
 import unittest2
@@ -70,7 +69,7 @@ class _BaseTestCase(TestCase, unittest2.TestCase):
         world.test = self
 
 class TestHandleASingleRequest(_BaseTestCase):
-    def test_running_a_single_process(self):
+    def test_handling_a_single_request(self):
         Given.I_set_the_smtp_port_to(7999)
         And.I_have_a_transporter_running()
         And.I_have_a_smtp_server_running()
@@ -83,7 +82,7 @@ class TestHandleASingleRequest(_BaseTestCase):
 
 
 class TestHandleASingleRequestWithNoSMTPServer(_BaseTestCase):
-    def test_running_a_single_process(self):
+    def test_handling_a_single_request_with_no_SMTP_server(self):
         Given.I_set_the_smtp_port_to(7998)
         And.I_have_a_transporter_running()
         When.I_send_an_http_email_expecting_an_error(503)
