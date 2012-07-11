@@ -2,7 +2,6 @@ from Queue import Empty
 from multiprocessing import Process, Queue
 
 from pea import *
-import unittest2
 
 from transporter.api import app
 from tests.helpers.smtp_server import FakeSMTPServer
@@ -47,26 +46,25 @@ def I_send_an_http_email_expecting_an_error(errno):
         'text': 'I was expecting a {0}'.format(errno),
     }
     resp = world.transporter.post('/', data=data)
-    world.test.assertEqual(resp.status_code, errno)
+    world.assertEqual(resp.status_code, errno)
 
 @step
 def I_receive_an_email_sent_to(to_address):
     email = get_mail_from_world(world)
-    world.test.assertEqual(email.get('to'), to_address)
+    world.assertEqual(email.get('to'), to_address)
 
 @step
 def I_receive_no_emails():
-    world.test.assertRaises(Empty, get_mail_from_world, world)
+    world.assertRaises(Empty, get_mail_from_world, world)
 
 @step
 def I_stop_the_smtp_server():
     world.smtp_server_process.terminate()
 
 
-class _BaseTestCase(TestCase, unittest2.TestCase):
+class _BaseTestCase(TestCase):
     def setUp(self):
         super(_BaseTestCase, self).setUp()
-        world.test = self
 
 class TestHandleASingleRequest(_BaseTestCase):
     def test_handling_a_single_request(self):
